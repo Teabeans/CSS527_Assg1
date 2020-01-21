@@ -17,5 +17,11 @@ int main() {
   // Test text load
   theBox.loadText( "plaintext.txt" );
 
+  // Test S-box encryption using K1 (rather than K2)
+  // Key 1, Row 0
+  theBox.encrypt( "K1", 0 );
+
+  theBox.renderCiphertext( 16 );
+
   return 1;
 }

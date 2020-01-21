@@ -10,8 +10,9 @@ class sbox {
   public:
   // Substitution boxes
   unsigned char S1[4][4]; // [row][col]
+  unsigned char S1Linear[16];
   unsigned char S2[4][4]; // [row][col]
-
+  unsigned char S2Linear[16];
   unsigned char K1[4];
   unsigned char K2[4];
 
@@ -29,8 +30,12 @@ class sbox {
   bool loadSbox( std::string filenameS1, std::string filenameS2 );
   bool loadKeys( std::string filename );
 
+  void encrypt( std::string keyDesignate, int row );
+
   // Render the text
   void renderText( );
+  void renderCiphertext( int length );
   int convertBinaryToInt( std::string binaryString );
   char convertIntToChar( int input );
 };
+

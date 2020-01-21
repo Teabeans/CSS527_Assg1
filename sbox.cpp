@@ -58,6 +58,8 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <stdio.h>
+#include <iomanip>
 
 //-------|---------|---------|---------|---------|---------|---------|---------|
 //
@@ -95,6 +97,21 @@ sbox::~sbox( ) {
   this->tareFields();
 }
 
+void sbox::renderCiphertext( int length ) {
+  if( DEBUG ) {
+    std::cerr << "--------|--------|-------- CIPHERTEXT --------|--------|--------" << std::endl;
+  }
+  for( int i = 0 ; i < length ; i++ ) {
+  	std::cerr << std::setw(3) << (unsigned int)this->ciphertext[i];
+  	if( i % 4 == 3 ) {
+      std::cerr << std::endl;
+  	}
+  }
+  if( DEBUG ) {
+  	std::cerr << "--------|--------|-------- CIPHERTEXT --------|--------|--------" << std::endl;
+  }
+}
+
 void sbox::tareFields( ) {
   for( int row = 0 ; row < 4 ; row++ ) {
     this->K1[row] = (unsigned char)0;
@@ -103,6 +120,10 @@ void sbox::tareFields( ) {
       this->S1[row][col] = (unsigned char)0;
       this->S2[row][col] = (unsigned char)0;
     }
+  }
+  for( int i = 0 ; i < 16 ; i++ ) {
+  	this->S1Linear[i] = (unsigned char)0;
+  	this->S2Linear[i] = (unsigned char)0;
   }
   for( int i = 0 ; i < MAX_MSG_LENGTH ; i++ ) {
   	this->plaintext[ i ]  = '\0';
@@ -170,7 +191,8 @@ bool sbox::loadSbox( std::string filenameS1, std::string filenameS2 ) {
   for( int row = 0 ; row < 4 ; row++ ) {
     for( int col = 0 ; col < 4 ; col++ ) {
       S1txt >> substitution;
-      this->S1[row][col] = (unsigned char)substitution;
+      this->S1[row][col]            = (unsigned char)substitution;
+      this->S1Linear[((row*4)+col)] = (unsigned char)substitution;
     }
   }
   S1txt.close();
@@ -181,7 +203,8 @@ bool sbox::loadSbox( std::string filenameS1, std::string filenameS2 ) {
   for( int row = 0 ; row < 4 ; row++ ) {
     for( int col = 0 ; col < 4 ; col++ ) {
       S2txt >> substitution;
-      this->S2[row][col] = (unsigned char)substitution;
+      this->S2[row][col]            = (unsigned char)substitution;
+      this->S2Linear[((row*4)+col)] = (unsigned char)substitution;
     }
   }
   S2txt.close();
@@ -191,7 +214,7 @@ bool sbox::loadSbox( std::string filenameS1, std::string filenameS2 ) {
     std::cerr << "Substitution Box S1:" << std::endl;
     for( int row = 0 ; row < 4 ; row++ ) {
       for( int col = 0 ; col < 4 ; col++ ) {
-        std::cerr << (unsigned int)this->S1[row][col] << " ";
+        std::cerr << std::setw(3) << (unsigned int)this->S1[row][col] << " ";
       }
       std::cerr << std::endl;
     }
@@ -200,9 +223,19 @@ bool sbox::loadSbox( std::string filenameS1, std::string filenameS2 ) {
     std::cerr << "Substitution Box S2:" << std::endl;
     for( int row = 0 ; row < 4 ; row++ ) {
       for( int col = 0 ; col < 4 ; col++ ) {
-        std::cerr << (unsigned int)this->S2[row][col] << " ";
+        std::cerr << std::setw(3) << (unsigned int)this->S2[row][col] << " ";
       }
       std::cerr << std::endl;
+    }
+    std::cerr << std::endl;
+
+    std::cerr << "SBoxes (Linear):" << std::endl;
+    for( int i = 0 ; i < 16 ; i++ ) {
+      std::cerr << std::setw(3) << (unsigned int)this->S1Linear[i];
+    }
+    std::cerr << std::endl;
+    for( int i = 0 ; i < 16 ; i++ ) {
+      std::cerr << std::setw(3) << (unsigned int)this->S2Linear[i];
     }
     std::cerr << std::endl;
 
@@ -254,6 +287,54 @@ bool sbox::loadKeys( std::string filename ) {
 
   }
   return true;
+}
+
+// (+) --------------------------------|
+// #TODO( )
+// ------------------------------------|
+// Desc:    TODO
+// Params:  TODO
+// PreCons: TODO
+// PosCons: TODO
+// RetVal:  TODO
+void sbox::encrypt( std::string keyDesignate, int row ) {
+  // Transfer the keys into the method
+  unsigned char key[4];
+  if( keyDesignate == "K1" ) {
+    for( int i = 0 ; i < 4 ; i++ ) {
+      key[i] = this->K1[i];
+    }
+  }
+  else if( keyDesignate == "K2" ) {
+    for( int i = 0 ; i < 4 ; i++ ) {
+      key[i] = this->K2[i];
+    }
+  }
+  // Copy the row from the store to the method
+  unsigned char plaintextRow[4];
+  for( int i = 0 ; i < 4 ; i++ ) {
+    plaintextRow[i] = this->plaintext[ (row*4) + i];
+  }
+  // Implement the cipher
+  unsigned char cipherIndex1 = plaintextRow[1] ^ key[0];
+  unsigned char cipherIndex2 = plaintextRow[3] ^ key[2];
+  unsigned char cipherIndex3 = plaintextRow[4] ^ key[1];
+  unsigned char cipherIndex4 = plaintextRow[2] ^ key[3];
+  unsigned char cipherRow[4];
+  cipherRow[0] = S1Linear[cipherIndex1];
+  cipherRow[1] = S2Linear[cipherIndex2];
+  cipherRow[2] = S1Linear[cipherIndex3];
+  cipherRow[3] = S2Linear[cipherIndex4];
+  if( DEBUG ) {
+    std::cerr << "----- ENCRYPTION COMPLETE -----" << std::endl;
+    for( int i = 0 ; i < 4 ; i++ ){
+      std::cerr << std::setw(3) << (unsigned int)cipherRow[i];
+    }
+    std::cerr << std::endl;
+  }
+  for( int i = 0 ; i < 4 ; i++ ) {
+    this->ciphertext[i + (row*4)] = cipherRow[i];
+  }
 }
 
 // (+) --------------------------------|
