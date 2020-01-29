@@ -35,6 +35,7 @@ class sbox {
 
   // Workers
   void encrypt( std::string keyDesignate, int row );
+  void encryptTLUM( std::string keyDesignate, int row );
   double avalancheCompare( std::string seq1, std::string seq2 );
 
   // Convert data from one to another

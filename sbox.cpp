@@ -398,6 +398,82 @@ void sbox::encrypt( std::string keyDesignate, int row ) {
 } // Closing encrypt()
 
 // (+) --------------------------------|
+// #encrypt( )
+// ------------------------------------|
+// Desc:    TODO
+// Params:  TODO
+// PreCons: TODO
+// PosCons: TODO
+// RetVal:  TODO
+void sbox::encryptTLUM( std::string keyDesignate, int row ) {
+  if( DEBUG ) {
+    std::cerr << "Encrypting MSG (" << row << ") using '" << keyDesignate << "'..." << std::endl;
+  }
+
+  // Transfer the appropriate key into the method
+  unsigned char key[4];
+  if( keyDesignate == "K1" ) {
+    for( int i = 0 ; i < 4 ; i++ ) {
+      key[i] = this->K1[i];
+    }
+  }
+  else if( keyDesignate == "K2" ) {
+    for( int i = 0 ; i < 4 ; i++ ) {
+      key[i] = this->K2[i];
+    }
+  }
+  
+  // Copy the row from the plaintext buffer into the method
+  unsigned char plaintextRow[4];
+  for( int i = 0 ; i < 4 ; i++ ) {
+    plaintextRow[i] = this->plaintext[ (row*4) + i];
+  }
+  
+  unsigned char cipherIndex[4];
+  unsigned char cipherRow[4];  
+
+  for( int round = 0 ; round < 3 ; round++ ) {
+    // Implement the cipher to find the appropriate indices
+    cipherIndex[0] = plaintextRow[1] ^ key[0];
+    cipherIndex[1] = plaintextRow[3] ^ key[2];
+    cipherIndex[2] = plaintextRow[0] ^ key[1];
+    cipherIndex[3] = plaintextRow[2] ^ key[3];
+
+    // Read out from S1 and S2 at the appropriate locations to find the cipher character
+    cipherRow[0] = this->S1Linear[cipherIndex[0]];
+    cipherRow[1] = this->S2Linear[cipherIndex[1]];
+    cipherRow[2] = this->S1Linear[cipherIndex[2]];
+    cipherRow[3] = this->S2Linear[cipherIndex[3]];
+
+    // Diffuse the effect to multiple characters of the cipher row
+    unsigned char temp = cipherRow[0];
+    cipherRow[0] = (cipherRow[0] + cipherRow[1]) % 16;
+    cipherRow[1] = (cipherRow[1] + cipherRow[2]) % 16;
+    cipherRow[2] = (cipherRow[2] + cipherRow[3]) % 16;
+    cipherRow[3] = (cipherRow[3] + temp) % 16;
+  }
+
+  // Assign the enciphered row to the ciphertext buffer
+  for( int i = 0 ; i < 4 ; i++ ) {
+    this->ciphertext[i + (row*4)] = cipherRow[i];
+  }
+
+  // Report results
+  if( DEBUG ) {
+    std::cerr << "----- ENCRYPTION COMPLETE -----" << std::endl;
+    std::cerr << "  [";
+    for( int i = 0 ; i < 4 ; i++ ){
+      std::cerr << std::setw(3) << (unsigned int)cipherRow[i];
+      if( i % 4 != 3 ) {
+        std::cerr << ",";
+      }
+    }
+    std::cerr << " ]" << std::endl << std::endl;
+  }
+
+} // Closing encrypt()
+
+// (+) --------------------------------|
 // #avalancheCompare( string, string )
 // ------------------------------------|
 // Desc:    Analyze the avalanche effect
@@ -411,7 +487,7 @@ double sbox::avalancheCompare( std::string seq1, std::string seq2 ) {
 
   }
   if( seq1.length() != seq2.length() ) {
-  	std::cerr << "Invalid comparison. Sequences are of differing length." << std::endl;
+      std::cerr << "Invalid comparison. Sequences are of differing length." << std::endl;
     return 9999.99;
   }
 

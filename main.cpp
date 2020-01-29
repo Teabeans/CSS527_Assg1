@@ -74,5 +74,23 @@ int main() {
   std::cerr << "Comparing original ciphertext binary string to ComparisonBox binary string..." << std::endl;
   std::cerr << theBox.avalancheCompare( theBox.cipherToString( 0, 9), compareBox.cipherToString( 0, 9) ) << "\% different." << std::endl;
 
+  // Test text load
+  theBox.loadPlaintext( "plaintext.txt" );
+
+  std::cerr << "Re-encrypting default and comparison boxes with improved encryption schema..." << std::endl;
+  for( int i = 0 ; i < 10 ; i++ ) {
+    theBox.encryptTLUM( "K1", i );
+    compareBox.encryptTLUM( "K1", i );
+  }
+  
+  std::cerr << "Default encryption schema ciphertext:" << std::endl;
+  theBox.renderCiphertext( 40 );
+
+  std::cerr << "Improved encryption schema ciphertext:" << std::endl;
+  compareBox.renderCiphertext( 40 );
+
+  std::cerr << "Comparing original ciphertext binary string to ComparisonBox binary string..." << std::endl;
+  std::cerr << theBox.avalancheCompare( theBox.cipherToString( 0, 9), compareBox.cipherToString( 0, 9) ) << "\% different." << std::endl;
+
   return 1;
 }
