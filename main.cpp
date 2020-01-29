@@ -57,6 +57,9 @@ int main() {
   }
   compareBox.renderCiphertext( 40 );
 
+  std::cerr << "Converting DefaultBox messages 0 to 9 to binary string..." << std::endl;
+  std::cerr << theBox.cipherToString( 0, 9) << std::endl << std::endl;
+
   std::cerr << "Converting ComparisonBox messages 0 to 9 to binary string..." << std::endl;
   std::cerr << compareBox.cipherToString( 0, 9) << std::endl << std::endl;
 
@@ -89,8 +92,17 @@ int main() {
   std::cerr << "Improved encryption schema ciphertext:" << std::endl;
   compareBox.renderCiphertext( 40 );
 
+  std::cerr << "Rendering DefaultBox messages 0 to 9 binary string to blocks..." << std::endl;
+  compareBox.renderBinaryString( theBox.cipherToString(0, 9) );
+  std::cerr << std::endl;
+
+  std::cerr << "Rendering ComparisonBox messages 0 to 9 binary string to blocks..." << std::endl;
+  compareBox.renderBinaryString( compareBox.cipherToString(0, 9) );
+  std::cerr << std::endl;
+
   std::cerr << "Comparing original ciphertext binary string to ComparisonBox binary string..." << std::endl;
   std::cerr << theBox.avalancheCompare( theBox.cipherToString( 0, 9), compareBox.cipherToString( 0, 9) ) << "\% different." << std::endl;
+  std::cerr << std::endl;
 
   return 1;
 }

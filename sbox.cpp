@@ -432,7 +432,7 @@ void sbox::encryptTLUM( std::string keyDesignate, int row ) {
   unsigned char cipherIndex[4];
   unsigned char cipherRow[4];  
 
-  for( int round = 0 ; round < 64 ; round++ ) {
+  for( int round = 0 ; round < 15 ; round++ ) {
     // Implement the cipher to find the appropriate indices
     cipherIndex[0] = plaintextRow[1] ^ key[0];
     cipherIndex[1] = plaintextRow[3] ^ key[2];
@@ -440,7 +440,7 @@ void sbox::encryptTLUM( std::string keyDesignate, int row ) {
     cipherIndex[3] = plaintextRow[2] ^ key[3];
 
     // Read out from S1 and S2 at the appropriate locations to find the cipher character
-    int sum = cipherRow[0] + cipherRow[1] + cipherRow[2];
+    int sum = cipherRow[0] + cipherRow[1] + cipherRow[2] + cipherRow[3];
     if( sum % 2 == 0 ) {
       cipherRow[0] = this->S1Linear[cipherIndex[0]];
       cipherRow[1] = this->S2Linear[cipherIndex[1]];
@@ -477,7 +477,7 @@ void sbox::encryptTLUM( std::string keyDesignate, int row ) {
       cipherRow[2] = cipherRow[1];
       cipherRow[1] = temp;
     }
-  }
+  } // End of for loop - Rounds over
 
   // Assign the enciphered row to the ciphertext buffer
   for( int i = 0 ; i < 4 ; i++ ) {
