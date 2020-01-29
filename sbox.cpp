@@ -432,7 +432,7 @@ void sbox::encryptTLUM( std::string keyDesignate, int row ) {
   unsigned char cipherIndex[4];
   unsigned char cipherRow[4];  
 
-  for( int round = 0 ; round < 3 ; round++ ) {
+  for( int round = 0 ; round < 64 ; round++ ) {
     // Implement the cipher to find the appropriate indices
     cipherIndex[0] = plaintextRow[1] ^ key[0];
     cipherIndex[1] = plaintextRow[3] ^ key[2];
@@ -440,17 +440,43 @@ void sbox::encryptTLUM( std::string keyDesignate, int row ) {
     cipherIndex[3] = plaintextRow[2] ^ key[3];
 
     // Read out from S1 and S2 at the appropriate locations to find the cipher character
-    cipherRow[0] = this->S1Linear[cipherIndex[0]];
-    cipherRow[1] = this->S2Linear[cipherIndex[1]];
-    cipherRow[2] = this->S1Linear[cipherIndex[2]];
-    cipherRow[3] = this->S2Linear[cipherIndex[3]];
+    int sum = cipherRow[0] + cipherRow[1] + cipherRow[2];
+    if( sum % 2 == 0 ) {
+      cipherRow[0] = this->S1Linear[cipherIndex[0]];
+      cipherRow[1] = this->S2Linear[cipherIndex[1]];
+      cipherRow[2] = this->S1Linear[cipherIndex[2]];
+      cipherRow[3] = this->S2Linear[cipherIndex[3]];
+    }
+    else {
+      cipherRow[0] = this->S2Linear[cipherIndex[0]];
+      cipherRow[1] = this->S1Linear[cipherIndex[1]];
+      cipherRow[2] = this->S2Linear[cipherIndex[2]];
+      cipherRow[3] = this->S1Linear[cipherIndex[3]];    	
+    }
 
     // Diffuse the effect to multiple characters of the cipher row
-    unsigned char temp = cipherRow[0];
-    cipherRow[0] = (cipherRow[0] + cipherRow[1]) % 16;
-    cipherRow[1] = (cipherRow[1] + cipherRow[2]) % 16;
-    cipherRow[2] = (cipherRow[2] + cipherRow[3]) % 16;
-    cipherRow[3] = (cipherRow[3] + temp) % 16;
+    unsigned char tempDiffuse1 = cipherRow[0];
+    unsigned char tempDiffuse2 = cipherRow[1];
+    cipherRow[0] = (cipherRow[0] + cipherRow[1] + cipherRow[2]) % 16;
+    cipherRow[1] = (cipherRow[1] + cipherRow[2] + cipherRow[3]) % 16;
+    cipherRow[2] = (cipherRow[2] + cipherRow[3] + tempDiffuse1) % 16;
+    cipherRow[3] = (cipherRow[3] + tempDiffuse1 + tempDiffuse2) % 16;
+
+    // Rotate L or R
+    if( sum % 2 == 0 ) {
+      unsigned char temp = cipherRow[0];
+      cipherRow[0] = cipherRow[1];
+      cipherRow[1] = cipherRow[2];
+      cipherRow[2] = cipherRow[3];
+      cipherRow[3] = temp;
+    }
+    else {
+      unsigned char temp = cipherRow[0];
+      cipherRow[0] = cipherRow[3];
+      cipherRow[3] = cipherRow[2];
+      cipherRow[2] = cipherRow[1];
+      cipherRow[1] = temp;
+    }
   }
 
   // Assign the enciphered row to the ciphertext buffer
